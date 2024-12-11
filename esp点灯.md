@@ -1,3 +1,7 @@
+- [ESP32使用GPIO](#esp32使用gpio)
+  - [IDF案例代码学习](#idf案例代码学习)
+  - [ArduinoIDE案例代码学习](#arduinoide案例代码学习)
+
 # ESP32使用GPIO
 ## IDF案例代码学习
 - 案例路径：`Espressif\frameworks\esp-idf-v5.1.5\examples\peripherals\gpio\generic_gpio`
@@ -213,8 +217,7 @@
             - 输入`idf.py monitor`命令，运行程序。
 
 
-## IDE案例代码学习
-
+## ArduinoIDE案例代码学习
 - `Blink.ino`  
     简单运用GPIO进行输出
     ```ino
