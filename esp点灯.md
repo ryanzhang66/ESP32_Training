@@ -1,5 +1,5 @@
 # ESP32使用GPIO
-## 案例代码学习
+## IDF案例代码学习
 - 案例路径：`Espressif\frameworks\esp-idf-v5.1.5\examples\peripherals\gpio\generic_gpio`
 - 项目结构：
     ```
@@ -200,3 +200,92 @@
 
             endmenu
             ```
+    - **编译、烧录、运行**  
+        `ESP-IDF 编译系统不支持 ESP-IDF 路径或其工程路径中带有空格。`
+        - **编译：**
+            - 在终端中进入项目路径，使用cd命令切换到项目路径。
+            - 输入`idf.py set-target esp32`设置目标芯片为ESP32。
+            - 输入`idf.py menuconfig`打开配置菜单，配置项目的wifi等（这里可跳过）
+            - 输入`idf.py build`编译项目。
+        - **烧录：**
+            - 输入`idf.py flash`命令，将编译后的程序烧录到开发板。
+        - **运行：**
+            - 输入`idf.py monitor`命令，运行程序。
+
+
+## IDE案例代码学习
+
+- `Blink.ino`  
+    简单运用GPIO进行输出
+    ```ino
+    /*
+        闪烁
+
+        每隔一秒打开LED灯，再过一秒关闭LED灯，重复进行。
+
+        大多数Arduino都有一个可以控制的内置LED。在UNO、MEGA和ZERO上，它连接到数字引脚13，在MKR1000上连接到引脚6。LED_BUILTIN被设置为正确的LED引脚，无论使用哪个板。如果您想知道您的Arduino型号上内置LED连接到哪个引脚，请查看您板子的技术规格：
+        https://www.arduino.cc/en/Main/Products
+    */
+
+    // setup函数在您按下重置或给板子供电时运行一次
+    void setup() {
+    // 初始化数字引脚LED_BUILTIN为输出。
+    pinMode(LED_BUILTIN, OUTPUT);
+    }
+
+    // loop函数将无限重复运行
+    void loop() {
+    digitalWrite(LED_BUILTIN, HIGH);  // 打开LED灯（HIGH是电压等级）
+    delay(1000);                      // 等待一秒
+    digitalWrite(LED_BUILTIN, LOW);   // 通过将电压设为LOW来关闭LED灯
+    delay(1000);                      // 等待一秒
+    }
+    ```
+- `FunctionalInterruptStruct.ino`  
+    简单运用GPIO的输入和中断
+    ```ino
+    #include <Arduino.h> //引入Arduino核心库，以便使用Arduino的功能。
+
+    #define BUTTON1 16
+    #define BUTTON2 17
+
+    struct Button {
+    uint8_t PIN;  //按钮连接的引脚
+    volatile uint32_t numberKeyPresses;  //记录按钮按下的次数
+    volatile int pressed;  //按钮是否被按下的状态标志
+    };
+
+    //isr函数是一个中断服务例程（ISR）
+    void isr(void *param) {
+    struct Button *button = (struct Button *)param;  //将传入的按钮结构体指针转换并使用
+    button->numberKeyPresses = button->numberKeyPresses + 1;
+    button->pressed = 1;
+    }
+
+    //checkPressed函数检查按钮的状态。如果pressed标志为1，输出当前按钮的按下次数，然后重置pressed标志为0
+    void checkPressed(struct Button *button) {
+    if (button->pressed) {
+        Serial.printf("Button on pin %u has been pressed %lu times\n", button->PIN, button->numberKeyPresses);
+        button->pressed = 0;
+    }
+    }
+
+    struct Button button1 = {BUTTON1, 0, 0};  //创建Button结构体实例
+    struct Button button2 = {BUTTON2, 0, 0};
+
+    void setup() {
+    Serial.begin(115200);  //启动串口通信
+    pinMode(button1.PIN, INPUT_PULLUP);  //设置按钮引脚为输入模式，并启用内置的上拉电阻
+    pinMode(button2.PIN, INPUT_PULLUP);
+    attachInterruptArg(button1.PIN, isr, (void *)&button1, FALLING);  //使用attachInterruptArg函数为两个按钮引脚添加中断，当检测到下降沿（按钮被按下时），调用isr函数，并传递对应的按钮结构体的指针作为参数
+    attachInterruptArg(button2.PIN, isr, (void *)&button2, FALLING);
+    }
+
+    void loop() {
+    checkPressed(&button1);  //调用checkPressed函数，输出按钮按下的次数
+    checkPressed(&button2);
+    }
+    ```
+- **编译、烧录、运行** 
+    - 直接点击上传按钮
+
