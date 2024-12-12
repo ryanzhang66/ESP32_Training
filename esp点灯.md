@@ -216,6 +216,136 @@
         - **运行：**
             - 输入`idf.py monitor`命令，运行程序。
 
+## IDF学习代码编写
+    我们在学习了上述的案例后，可以尝试自己编写一些代码来实现一些功能。  
+
+- 先引入头文件
+    ```c
+    #include "driver/gpio.h"
+    #include <unistd.h>
+    #include "esp_attr.h"
+
+    #define LED_GPIO 18
+    #define BUTTON_GPIO 10
+    ```
+- 编写LED初始化函数
+    ```c
+    void GPIO_Led_Init()
+    {
+        gpio_config_t io_conf = {};
+        io_conf.intr_type = GPIO_INTR_DISABLE;      // 禁用中断
+        io_conf.mode = GPIO_MODE_OUTPUT;        // 设置为输出模式
+        io_conf.pin_bit_mask = (1ULL << 18);  //GPIO18
+        io_conf.pull_down_en = 0;// 禁用下拉模式
+        io_conf.pull_up_en = 1;// 使能上拉模式
+        gpio_config(&io_conf);// 根据给定的设置配置 GPIO
+    }
+    ```
+- 编写中断初始化函数
+    ```c
+    void GPIO_Button_Init()
+    {
+        gpio_config_t io_conf = {};
+        io_conf.intr_type = GPIO_INTR_POSEDGE;      // 开启上升沿中断
+        io_conf.mode = GPIO_MODE_INPUT;        // 设置为输入模式
+        io_conf.pin_bit_mask = (1ULL << 10);  //GPIO10
+        io_conf.pull_down_en = 0;// 禁用下拉模式
+        io_conf.pull_up_en = 1;// 使能上拉模式
+        gpio_config(&io_conf);// 根据给定的设置配置 GPIO
+
+        gpio_install_isr_service(ESP_INTR_FLAG_EDGE);                   // 安装 GPIO 中断服务程序(边沿触发)
+        gpio_isr_handler_add(BUTTON_GPIO, Button_Function, NULL);           // 分配中断处理程序
+
+        gpio_intr_enable(BUTTON_GPIO);
+    }
+    ```
+- 编写中断处理函数
+    ```c
+    void IRAM_ATTR Button_Function(void* arg)  //IRAM_ATTR 是一个宏定义，用于将函数放在 IRAM 中
+    {
+        //消抖处理
+        if(gpio_get_level(BUTTON_GPIO)==1){
+            usleep(10);
+            if(gpio_get_level(BUTTON_GPIO)==1){
+                //执行的代码写这里
+                gpio_set_level(LED_GPIO,!gpio_get_level(LED_GPIO));  //翻转LED状态
+            }
+        }
+    }
+    ```
+- 编写主函数
+    ```c
+    void app_main()
+    {
+        GPIO_Led_Init();
+        GPIO_Button_Init();
+
+        while(1) {
+            sleep(1);
+        }
+    } 
+    ```
+- 主体代码
+    ```c
+    #include "driver/gpio.h"
+    #include <unistd.h>
+    #include "esp_attr.h"
+
+    #define LED_GPIO 18
+    #define BUTTON_GPIO 10
+
+    void IRAM_ATTR Button_Function();  //声明中断处理函数
+
+    void GPIO_Led_Init()
+    {
+        gpio_config_t io_conf = {};
+        io_conf.intr_type = GPIO_INTR_DISABLE;      // 禁用中断
+        io_conf.mode = GPIO_MODE_OUTPUT;        // 设置为输出模式
+        io_conf.pin_bit_mask = (1ULL << 18);  //GPIO18
+        io_conf.pull_down_en = 0;// 禁用下拉模式
+        io_conf.pull_up_en = 1;// 使能上拉模式
+        gpio_config(&io_conf);// 根据给定的设置配置 GPIO
+    }
+
+    void GPIO_Button_Init()
+    {
+        gpio_config_t io_conf = {};
+        io_conf.intr_type = GPIO_INTR_POSEDGE;      // 开启上升沿中断
+        io_conf.mode = GPIO_MODE_INPUT;        // 设置为输入模式
+        io_conf.pin_bit_mask = (1ULL << 10);  //GPIO10
+        io_conf.pull_down_en = 0;// 禁用下拉模式
+        io_conf.pull_up_en = 1;// 使能上拉模式
+        gpio_config(&io_conf);// 根据给定的设置配置 GPIO
+
+        gpio_install_isr_service(ESP_INTR_FLAG_EDGE);                   // 安装 GPIO 中断服务程序(边沿触发)
+        gpio_isr_handler_add(BUTTON_GPIO, Button_Function, NULL);           // 分配中断处理程序
+
+        gpio_intr_enable(BUTTON_GPIO);
+    }
+
+    void IRAM_ATTR Button_Function(void* arg)  //IRAM_ATTR 是一个宏定义，用于将函数放在 IRAM 中
+    {
+        //消抖处理
+        if(gpio_get_level(BUTTON_GPIO)==1){
+            usleep(10);
+            if(gpio_get_level(BUTTON_GPIO)==1){
+                //执行的代码写这里
+                gpio_set_level(LED_GPIO,!gpio_get_level(LED_GPIO));  //翻转LED状态
+            }
+        }
+    }
+
+    void app_main()
+    {
+        GPIO_Led_Init();
+        GPIO_Button_Init();
+
+        while(1) {
+            sleep(1);
+        }
+    } 
+    ``` 
+
 
 ## ArduinoIDE案例代码学习
 - `Blink.ino`  
